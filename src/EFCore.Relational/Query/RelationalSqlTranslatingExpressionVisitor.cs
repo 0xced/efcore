@@ -971,14 +971,16 @@ namespace Microsoft.EntityFrameworkCore.Query
                             var discriminatorColumn = BindProperty(entityReferenceExpression, discriminatorProperty);
                             if (discriminatorColumn != null)
                             {
+                                var typeMapping = discriminatorProperty.GetRelationalTypeMapping();
                                 return concreteEntityTypes.Count == 1
                                     ? _sqlExpressionFactory.Equal(
                                         discriminatorColumn,
-                                        _sqlExpressionFactory.Constant(concreteEntityTypes[0].GetDiscriminatorValue()))
+                                        _sqlExpressionFactory.Constant(
+                                            concreteEntityTypes[0].GetDiscriminatorValue(), typeMapping))
                                     : (Expression)_sqlExpressionFactory.In(
                                         discriminatorColumn,
                                         _sqlExpressionFactory.Constant(
-                                            concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList()),
+                                            concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList(), typeMapping),
                                         negated: false);
                             }
                         }

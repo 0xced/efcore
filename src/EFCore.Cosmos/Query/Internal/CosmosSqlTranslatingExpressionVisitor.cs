@@ -630,20 +630,24 @@ namespace Microsoft.EntityFrameworkCore.Cosmos.Query.Internal
                 }
 
                 var derivedType = entityType.GetDerivedTypes().SingleOrDefault(et => et.ClrType == typeBinaryExpression.TypeOperand);
+                var discriminatorProperty = entityType.GetDiscriminatorProperty();
                 if (derivedType != null
                     && TryBindMember(
                         entityReferenceExpression,
-                        MemberIdentity.Create(entityType.GetDiscriminatorProperty().Name)) is SqlExpression discriminatorColumn)
+                        MemberIdentity.Create(discriminatorProperty.Name)) is SqlExpression discriminatorColumn)
                 {
                     var concreteEntityTypes = derivedType.GetConcreteDerivedTypesInclusive().ToList();
 
+                    var typeMapping = discriminatorProperty.GetTypeMapping();
                     return concreteEntityTypes.Count == 1
                         ? _sqlExpressionFactory.Equal(
                             discriminatorColumn,
-                            _sqlExpressionFactory.Constant(concreteEntityTypes[0].GetDiscriminatorValue()))
+                            _sqlExpressionFactory.Constant(
+                                concreteEntityTypes[0].GetDiscriminatorValue(), typeMapping))
                         : (SqlExpression)_sqlExpressionFactory.In(
                             discriminatorColumn,
-                            _sqlExpressionFactory.Constant(concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList()),
+                            _sqlExpressionFactory.Constant(
+                                concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList(), typeMapping),
                             negated: false);
                 }
             }

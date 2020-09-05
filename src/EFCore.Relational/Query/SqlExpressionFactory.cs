@@ -918,9 +918,14 @@ namespace Microsoft.EntityFrameworkCore.Query
 
             var discriminatorColumn = GetMappedEntityProjectionExpression(selectExpression).BindProperty(discriminatorProperty);
             var concreteEntityTypes = entityType.GetConcreteDerivedTypesInclusive().ToList();
+            var typeMapping = discriminatorProperty.GetRelationalTypeMapping();
             var predicate = concreteEntityTypes.Count == 1
-                ? (SqlExpression)Equal(discriminatorColumn, Constant(concreteEntityTypes[0].GetDiscriminatorValue()))
-                : In(discriminatorColumn, Constant(concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList()), negated: false);
+                ? (SqlExpression)Equal(
+                    discriminatorColumn,
+                    Constant(concreteEntityTypes[0].GetDiscriminatorValue(), typeMapping))
+                : In(
+                    discriminatorColumn,
+                    Constant(concreteEntityTypes.Select(et => et.GetDiscriminatorValue()).ToList(), typeMapping), negated: false);
 
             selectExpression.ApplyPredicate(predicate);
 
